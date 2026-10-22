@@ -35,7 +35,7 @@ def test_small_pattern_not_notable():
     for _ in range(2):
         record_result(state, "a", correct=False, mistake_type=MistakeType.reversed.value, session_id=1)
     out = capture(chunks, state)
-    assert "← notable" not in out
+    assert "<- notable" not in out
 
 def test_other_counted_but_no_description():
     chunks, state = make_chunks(), AppState()

@@ -43,7 +43,8 @@ def label_batch(chunks_text: list[str], existing_labels: list[str], settings) ->
         if len(labels) != len(chunks_text):
             labels = (labels + ["General"] * len(chunks_text))[:len(chunks_text)]
         return labels
-    except Exception:
+    except Exception as e:
+        print(f"Warning: Topic labeling failed ({e}). Falling back to 'General'.")
         return ["General"] * len(chunks_text)
 
 # Label all chunks, reusing existing labels for unchanged chunk ids

@@ -64,7 +64,7 @@ def print_mistake_patterns(
             count = mistake_counts[mt.value]
             if count > 0:
                 pct = count / total_wrong
-                notable = " ← notable" if count >= MINIMUM_NOTABLE_COUNT else ""
+                notable = " <- notable" if count >= MINIMUM_NOTABLE_COUNT else ""
                 print(f"  {MISTAKE_LABELS[mt]}: {count} ({pct:.0%}){notable}")
     print(f"\n  Note: {FOOTNOTE}")
 

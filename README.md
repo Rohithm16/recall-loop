@@ -119,8 +119,8 @@ The core logic modules (`cleaning`, `models`, `mistakes`, `store`, `validators`,
 
 | Tool | Where | Purpose | Could it be removed? |
 |---|---|---|---|
-| **LlamaIndex** | `index.py`, `ingest.py` | Sentence splitting, Gemini embeddings, vector indexing, and chunk retrieval. | Yes. Could be replaced with a custom sliding-window splitter and a local SQLite/Numpy cosine search. |
-| **LangChain** | `llm.py` | `ChatGoogleGenerativeAI` with native `with_structured_output` for Pydantic schema enforcement and backoff. | Yes. Could use raw `google-genai` SDK or HTTP requests directly. |
+| **LlamaIndex** | `index.py`, `ingest.py` | Sentence splitting, vector indexing, and chunk retrieval with `google.genai` embeddings. | Yes. Could be replaced with a custom sliding-window splitter and a local SQLite/Numpy cosine search. |
+| **Google GenAI** | `llm.py`, `index.py` | Official `google-genai` SDK for structured outputs with Pydantic schema enforcement and semantic embeddings. | Yes. Could use raw HTTP requests directly. |
 | **LangGraph** | `graph.py` | Quiz session state machine with `interrupt()` and `Command(resume=...)` for human-in-the-loop terminal turns. | Yes. Could be written as a standard Python `while` loop with `input()`. |
 
 > **Note on framework independence:** None of the core algorithms (tracking, weakness scoring, coverage selection, text cleanup, mistake taxonomy, reporting) import any of these frameworks.
@@ -225,7 +225,7 @@ Run the scripts in `eval/` on your collection to fill in the evaluation table:
 
 - **Python Version:** Python 3.13.2 (detected on system).
 - **PDF Extraction:** `pymupdf` (PyMuPDF / `fitz`) — high-performance, actively maintained, handles multi-column layouts and text bounding accurately.
-- **Gemini Chat Model:** `gemini-2.0-flash` — fast generation, strong structured output adherence, cost-effective.
-- **Gemini Embedding Model:** `gemini-embedding-2-preview` — current recommended multimodal/text embedding model for semantic retrieval.
+- **Gemini Chat Model:** `gemini-3.5-flash` — fast generation, strong structured output adherence, cost-effective.
+- **Gemini Embedding Model:** `gemini-embedding-2-preview` — current recommended multimodal/text embedding model for semantic retrieval via the official `google-genai` SDK.
 - **LangGraph Interrupt API:** Modern `from langgraph.types import interrupt, Command` with `InMemorySaver` checkpointer.
 - **Chunk Size / Overlap:** 512 tokens with 64 token overlap, merging chunks smaller than 200 characters into neighbors.

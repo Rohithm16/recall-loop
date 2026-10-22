@@ -31,7 +31,7 @@ def get_settings() -> Settings:
     # Build and return the Settings object from environment variables.
     s = Settings()
     s.api_key = os.environ.get("GEMINI_API_KEY", "")
-    s.chat_model = os.environ.get("GEMINI_CHAT_MODEL", "gemini-2.0-flash")
+    s.chat_model = os.environ.get("GEMINI_CHAT_MODEL", "gemini-3.5-flash")
     s.embed_model = os.environ.get("GEMINI_EMBED_MODEL", "gemini-embedding-2-preview")
     s.data_dir = Path(os.environ.get("RECALL_LOOP_DATA_DIR", "./data"))
     s.solver_check = os.environ.get("SOLVER_CHECK", "on").lower() == "on"

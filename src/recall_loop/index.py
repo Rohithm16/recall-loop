@@ -1,26 +1,54 @@
 from pathlib import Path
 from typing import Optional
+from pydantic import PrivateAttr
+from google import genai
+from llama_index.core.base.embeddings.base import BaseEmbedding
 from recall_loop.models import Chunk
 
-# Build a LlamaIndex vector index from our chunks and persist it
+# Custom LlamaIndex embedding class using Google's current google.genai SDK
+class GenAIEmbedding(BaseEmbedding):
+    model_name: str
+    api_key: str
+    _client: genai.Client = PrivateAttr()
+
+    def __init__(self, model_name: str, api_key: str, **kwargs):
+        super().__init__(model_name=model_name, api_key=api_key, **kwargs)
+        self._client = genai.Client(api_key=api_key)
+
+    def _get_query_embedding(self, query: str) -> list[float]:
+        res = self._client.models.embed_content(model=self.model_name, contents=query)
+        return res.embeddings[0].values
+
+    def _get_text_embedding(self, text: str) -> list[float]:
+        res = self._client.models.embed_content(model=self.model_name, contents=text)
+        return res.embeddings[0].values
+
+    def _get_text_embeddings(self, texts: list[str]) -> list[list[float]]:
+        return [self._get_text_embedding(t) for t in texts]
+
+    async def _aget_query_embedding(self, query: str) -> list[float]:
+        return self._get_query_embedding(query)
+
+    async def _aget_text_embedding(self, text: str) -> list[float]:
+        return self._get_text_embedding(text)
+
+# Build a LlamaIndex vector index from chunks and persist it using google.genai embeddings
 def build_index(chunks: list[Chunk], collection: str, settings) -> None:
-    from llama_index.core import VectorStoreIndex, StorageContext, Settings as LISettings
+    from llama_index.core import VectorStoreIndex, Settings as LISettings
     from llama_index.core.schema import TextNode
-    from llama_index.embeddings.gemini import GeminiEmbedding
     from recall_loop.store import index_dir
 
     idx_path = index_dir(collection)
     idx_path.mkdir(parents=True, exist_ok=True)
 
-    # Set up Gemini embeddings
-    embed_model = GeminiEmbedding(
+    embed_model = GenAIEmbedding(
         model_name=settings.embed_model,
         api_key=settings.api_key,
     )
     LISettings.embed_model = embed_model
     LISettings.llm = None  # We don't use LlamaIndex's LLM
 
-    # Build nodes from our chunks, carrying our chunk ids as metadata
+    # Build nodes carrying chunk metadata
     nodes = []
     for chunk in chunks:
         node = TextNode(
@@ -36,16 +64,15 @@ def build_index(chunks: list[Chunk], collection: str, settings) -> None:
         )
         nodes.append(node)
 
-    index = VectorStoreIndex(nodes)
+    index = VectorStoreIndex(nodes, embed_model=embed_model)
     index.storage_context.persist(persist_dir=str(idx_path))
 
 # Load a persisted LlamaIndex index
 def load_index(collection: str, settings):
     from llama_index.core import StorageContext, load_index_from_storage, Settings as LISettings
-    from llama_index.embeddings.gemini import GeminiEmbedding
     from recall_loop.store import index_dir
 
-    embed_model = GeminiEmbedding(
+    embed_model = GenAIEmbedding(
         model_name=settings.embed_model,
         api_key=settings.api_key,
     )
@@ -54,12 +81,16 @@ def load_index(collection: str, settings):
 
     idx_path = index_dir(collection)
     storage_context = StorageContext.from_defaults(persist_dir=str(idx_path))
-    return load_index_from_storage(storage_context)
+    return load_index_from_storage(storage_context, embed_model=embed_model)
 
 # Retrieve the top-k most relevant chunks for a query, excluding flagged chunk ids
-def retrieve_chunks(query: str, collection: str, settings,
-                    flagged_ids: Optional[set[str]] = None,
-                    always_include_id: Optional[str] = None) -> list[dict]:
+def retrieve_chunks(
+    query: str,
+    collection: str,
+    settings,
+    flagged_ids: Optional[set[str]] = None,
+    always_include_id: Optional[str] = None,
+) -> list[dict]:
     from recall_loop.store import load_chunks
 
     flagged_ids = flagged_ids or set()
@@ -67,9 +98,7 @@ def retrieve_chunks(query: str, collection: str, settings,
     retriever = index.as_retriever(similarity_top_k=settings.why_top_k + len(flagged_ids) + 1)
     nodes = retriever.retrieve(query)
 
-    # Load all chunks to get metadata
     all_chunks = {c["id"]: c for c in load_chunks(collection)}
-
     results = []
     seen_ids = set()
 

@@ -22,24 +22,29 @@ def _throttle(min_seconds: float) -> None:
     _last_call_time = time.time()
 
 def call_structured(prompt: str, model_class: Type[T], settings) -> T:
-    # Call Gemini with structured output and retry on transient errors
-    from langchain_google_genai import ChatGoogleGenerativeAI
+    # Call Gemini with structured output using google.genai and retry on transient errors
+    from google import genai
     _throttle(settings.min_seconds_between_calls)
-    llm = ChatGoogleGenerativeAI(
-        model=settings.chat_model,
-        google_api_key=settings.api_key,
-    )
-    structured_llm = llm.with_structured_output(model_class)
+    client = genai.Client(api_key=settings.api_key)
+
     last_error = None
     for attempt in range(MAX_RETRIES):
         try:
-            result = structured_llm.invoke(prompt)
-            return result
+            response = client.models.generate_content(
+                model=settings.chat_model,
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_schema": model_class,
+                },
+            )
+            if response.parsed is not None:
+                return response.parsed
+            return model_class.model_validate_json(response.text)
         except Exception as e:
             last_error = e
             error_str = str(e).lower()
-            # Retry on rate limits or transient server errors
-            if "rate" in error_str or "quota" in error_str or "429" in error_str or "500" in error_str or "503" in error_str:
+            if any(k in error_str for k in ("rate", "quota", "429", "500", "503", "unavailable")):
                 delay = BASE_DELAY * (2 ** attempt) + random.uniform(0, 0.5)
                 time.sleep(delay)
             else:
@@ -48,21 +53,22 @@ def call_structured(prompt: str, model_class: Type[T], settings) -> T:
 
 def call_text(prompt: str, settings) -> str:
     # Call Gemini for a plain text response with retry on transient errors
-    from langchain_google_genai import ChatGoogleGenerativeAI
+    from google import genai
     _throttle(settings.min_seconds_between_calls)
-    llm = ChatGoogleGenerativeAI(
-        model=settings.chat_model,
-        google_api_key=settings.api_key,
-    )
+    client = genai.Client(api_key=settings.api_key)
+
     last_error = None
     for attempt in range(MAX_RETRIES):
         try:
-            result = llm.invoke(prompt)
-            return result.content
+            response = client.models.generate_content(
+                model=settings.chat_model,
+                contents=prompt,
+            )
+            return response.text or ""
         except Exception as e:
             last_error = e
             error_str = str(e).lower()
-            if "rate" in error_str or "quota" in error_str or "429" in error_str or "500" in error_str or "503" in error_str:
+            if any(k in error_str for k in ("rate", "quota", "429", "500", "503", "unavailable")):
                 delay = BASE_DELAY * (2 ** attempt) + random.uniform(0, 0.5)
                 time.sleep(delay)
             else:

@@ -60,15 +60,15 @@ def print_question(state: SessionState, chunk: dict, mcq: MCQ) -> None:
 # Print immediate feedback after answer is revealed
 def print_feedback(mcq: MCQ, chosen_index: int, correct: bool, chunk: dict) -> None:
     if correct:
-        print("\n✓ Correct!")
+        print("\nCorrect!")
     else:
-        print("\n✗ Incorrect.")
+        print("\nIncorrect.")
         chosen_opt = mcq.options[chosen_index]
         if chosen_opt.mistake_type and chosen_opt.mistake_type != MistakeType.other:
             mt = chosen_opt.mistake_type
             label = MISTAKE_LABELS.get(mt, mt.value)
             desc = MISTAKE_DESCRIPTIONS.get(mt, "")
-            print(f"Your choice looked like: {label} — {desc}")
+            print(f"Your choice looked like: {label} -- {desc}")
         correct_text = mcq.options[mcq.correct_index].text
         print(f"Correct answer: {OPTION_LETTERS[mcq.correct_index]}) {correct_text}")
     print(f"Explanation: {mcq.explanation}")
@@ -108,7 +108,7 @@ def node_generate_question(state: SessionState) -> dict:
     if mcq is None:
         skipped = list(state["skipped_chunks"]) + [state["current_chunk_id"]]
         return {"skipped_chunks": skipped, "current_chunk_id": None}
-    return {"current_mcq": mcq.model_dump(), "_retry_answer": False}
+    return {"current_mcq": mcq.model_dump(mode="json"), "_retry_answer": False}
 
 # Node: display question to the user
 def node_present_question(state: SessionState) -> dict:
@@ -116,11 +116,11 @@ def node_present_question(state: SessionState) -> dict:
     chunk = next((c for c in chunks if c["id"] == state["current_chunk_id"]), None)
     mcq = MCQ.model_validate(state["current_mcq"])
     print_question(state, chunk, mcq)
+    print("Enter A/B/C/D, 'skip', 'flag', or 'quit': ", end="", flush=True)
     return {"_retry_answer": False}
 
 # Node: interrupt and wait for answer input
 def node_wait_answer(state: SessionState) -> dict:
-    print("Enter A/B/C/D, 'skip', 'flag', or 'quit': ", end="", flush=True)
     ans = interrupt("waiting_for_answer")
     return {"_answer_input": str(ans)}
 
@@ -147,6 +147,7 @@ def node_route_answer(state: SessionState) -> dict:
             app_state.recent_questions = app_state.recent_questions[-MAX_RECENT_QUESTIONS:]
         save_state(collection, app_state)
         print_feedback(mcq, chosen_index, correct, chunk)
+        print("\nPress Enter to continue, 'why <question>', 'source', 'flag', or 'quit': ", end="", flush=True)
         new_recent = list(state["session_recent"]) + [state["current_chunk_id"]]
         return {
             "questions_asked": state["questions_asked"] + 1,
@@ -169,11 +170,11 @@ def node_route_answer(state: SessionState) -> dict:
         return {"done": True, "_retry_answer": False}
     else:
         print("Please enter A, B, C, D, 'skip', 'flag', or 'quit'.")
+        print("Enter A/B/C/D, 'skip', 'flag', or 'quit': ", end="", flush=True)
         return {"_retry_answer": True}
 
 # Node: interrupt and wait for post-answer follow-up command
 def node_wait_post(state: SessionState) -> dict:
-    print("\nPress Enter to continue, 'why <question>', 'source', 'flag', or 'quit': ", end="", flush=True)
     post_cmd = interrupt("waiting_for_post")
     return {"_post_input": str(post_cmd)}
 
