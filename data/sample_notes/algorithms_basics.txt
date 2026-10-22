@@ -1,0 +1,44 @@
+[SYNTHETIC NOTES — for testing only]
+
+Algorithms and Complexity
+
+An algorithm is a step-by-step procedure to solve a problem. Every algorithm has a time
+complexity and a space complexity.
+
+Big-O Notation
+
+Big-O notation describes how an algorithm's time or space grows as input size n grows.
+O(1): constant time — the operation takes the same time regardless of input size.
+O(log n): logarithmic — each step halves the remaining problem. Example: binary search.
+O(n): linear — time grows proportionally with input size. Example: linear search.
+O(n log n): linearithmic — common in efficient sorting. Example: merge sort, heap sort.
+O(n^2): quadratic — nested loops over the same data. Example: bubble sort, insertion sort.
+O(2^n): exponential — doubles with each addition to input. Example: naive recursion for Fibonacci.
+
+Sorting Algorithms
+
+Bubble sort: compare adjacent pairs and swap if out of order; repeat until sorted. O(n^2) worst case.
+Selection sort: find the minimum in the unsorted part and move it to the front. O(n^2) always.
+Insertion sort: build the sorted list one element at a time by inserting into the right position.
+Merge sort: divide the list in half recursively, sort each half, then merge. O(n log n) always. Stable.
+Quick sort: pick a pivot, partition the list so smaller items are left and larger are right, recurse.
+  Quick sort is O(n log n) average but O(n^2) worst case. Not stable by default.
+Heap sort: uses a max-heap to sort in O(n log n). Not stable.
+
+Searching
+
+Linear search: check each element in order. O(n) time. Works on unsorted data.
+Binary search: only works on sorted data. Compare the middle element; eliminate half the data each step.
+  Binary search runs in O(log n) time.
+
+Data Structures
+
+Array: fixed-size (in many languages), random access in O(1), insert/delete in O(n).
+Linked list: dynamic size, O(1) insert at head, O(n) access by index.
+Stack: last-in first-out (LIFO). Push and pop at the top. Used for undo, call stacks.
+Queue: first-in first-out (FIFO). Enqueue at rear, dequeue at front. Used in BFS.
+Hash table: maps keys to values using a hash function. Average O(1) for get/set.
+Binary search tree (BST): each node's left children are smaller, right are larger.
+  BST operations are O(log n) average, O(n) worst case if unbalanced.
+Graph: nodes connected by edges. Can be directed or undirected, weighted or unweighted.
+  BFS uses a queue; DFS uses a stack (or recursion).

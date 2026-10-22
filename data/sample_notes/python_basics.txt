@@ -1,0 +1,43 @@
+[SYNTHETIC NOTES — for testing only]
+
+Python Variables and Types
+
+In Python, variables do not need to be declared with a type. You simply assign a value.
+Python is dynamically typed, meaning the type of a variable is determined at runtime.
+The built-in function type() returns the type of any object.
+
+Python has several built-in data types:
+- int: whole numbers, e.g. x = 5
+- float: decimal numbers, e.g. y = 3.14
+- str: text, enclosed in single or double quotes, e.g. name = "Alice"
+- bool: True or False
+- list: ordered, mutable sequence, e.g. items = [1, 2, 3]
+- tuple: ordered, immutable sequence, e.g. coords = (10, 20)
+- dict: key-value pairs, e.g. d = {"a": 1}
+- set: unordered collection of unique items
+
+Control Flow
+
+if/elif/else statements control branching. Indentation defines blocks in Python.
+A for loop iterates over any iterable. A while loop runs as long as a condition is True.
+The break statement exits a loop early. The continue statement skips to the next iteration.
+
+Functions
+
+Define functions with the def keyword. Functions can accept parameters and return values.
+Default parameter values are evaluated once when the function is defined, not each call.
+Args and kwargs let functions accept variable numbers of arguments.
+*args collects positional arguments into a tuple. **kwargs collects keyword arguments into a dict.
+
+Modules and Imports
+
+A module is a .py file. Use import to bring a module into scope.
+from module import name imports a specific name. import module as alias renames it.
+The if __name__ == "__main__" guard runs code only when the file is run directly, not when imported.
+
+Error Handling
+
+Use try/except to catch exceptions. The except clause specifies the exception type to catch.
+finally runs regardless of whether an exception occurred.
+Raise an exception with raise ExceptionType("message").
+Custom exceptions are defined as classes that inherit from Exception.
